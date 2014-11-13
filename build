@@ -1,0 +1,1 @@
+gcc -O0 -g -std=c99 *.c -levent -levent_pthreads -lpthread
