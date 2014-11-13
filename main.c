@@ -91,13 +91,13 @@ sessdata_new(struct basedata_st* bd, int nfd) {
 
 void
 sessdata_ref(struct sessdata_st* sd) {
-    sd->ref++;
+    __sync_fetch_and_add(&sd->ref, 1);
     printf("fd:%d sd:%ld count:%d ref \n", sd->fd, (int64_t)sd, sd->ref);
 }
 
 void
 sessdata_unref(struct sessdata_st* sd) {
-    if (--sd->ref == 0) {
+    if (__sync_sub_and_fetch(&sd->ref, 1) == 0) {
         printf("fd:%d sd:%ld count:%d unref \n", sd->fd, (int64_t)sd, sd->ref);
         free(sd);
         printf("fd:%d sd:%ld freed\n", sd->fd, (int64_t)sd);
