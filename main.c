@@ -29,7 +29,7 @@ struct basedata_st {
     struct package_st* (*handler)(struct package_st* pkg);
 };
 
-struct basedata_st* basedata_new(struct package_st* (*handler)(struct package_st* pkg));
+struct basedata_st* basedata_new(const char* addr, struct package_st* (*handler)(struct package_st* pkg));
 void basedata_free(struct basedata_st* bd);
 void basedata_dispatch(struct basedata_st* bd);
 
@@ -260,7 +260,7 @@ _pipe_data_cb(int rfd, short what, void* ctx) {
 }
 // ----------------------------------------------------------------------------
 struct basedata_st* 
-basedata_new(struct package_st* (*handler)(struct package_st* pkg)) {
+basedata_new(const char* addr, struct package_st* (*handler)(struct package_st* pkg)) {
     struct basedata_st* bd = malloc(sizeof(*bd));
     bd->b = event_base_new();
     bd->thrnum = 4;
@@ -293,9 +293,9 @@ basedata_new(struct package_st* (*handler)(struct package_st* pkg)) {
     }
 
 
-    struct sockaddr addr;
-    int socklen = sizeof(addr);
-    int ret = evutil_parse_sockaddr_port("0.0.0.0:9876", &addr, &socklen);
+    struct sockaddr saddr;
+    int socklen = sizeof(saddr);
+    int ret = evutil_parse_sockaddr_port(addr, &saddr, &socklen);
     if (ret != 0) {
         printf("evutil_parse_sockaddr_port error\n");
         return NULL;
@@ -307,7 +307,7 @@ basedata_new(struct package_st* (*handler)(struct package_st* pkg)) {
                         bd, 
                         LEV_OPT_REUSEABLE|LEV_OPT_CLOSE_ON_FREE, 
                         100, 
-                        &addr, 
+                        &saddr, 
                         socklen);
     evconnlistener_set_error_cb(bd->l, _errorcb);
 
@@ -346,7 +346,7 @@ extern struct package_st* myhandler(struct package_st*);
 
 int
 main() {
-    struct basedata_st* bd = basedata_new(myhandler);
+    struct basedata_st* bd = basedata_new("0.0.0.0:9876", myhandler);
     assert(bd);
 
     basedata_dispatch(bd);
